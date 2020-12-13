@@ -1,0 +1,15 @@
+__pycache__/
+
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+*.manifest
+.pytest_cache/
+instance/
+.webassets-cache
+.venv
+
+*.idea/
+*.DS_Store
