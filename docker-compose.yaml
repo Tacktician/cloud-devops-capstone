@@ -1,0 +1,33 @@
+version: '2'
+services:
+ mongodb:
+   image: mongo:latest
+   container_name: mongodb
+   ports:
+     - "27017:27017"
+   volumes:
+     - db_data:/data/db
+   environment:
+    - MONGO_DATABASE=dbzdata
+   networks:
+    - test_network
+
+ app:
+   image: dbz-app:latest
+   build:
+    context: ../../../Desktop
+   container_name: dbz-app
+   ports:
+    - "5000:5000"
+   environment:
+    - MONGO_URI=mongodb
+   depends_on:
+    - mongodb
+   networks:
+    - test_network
+
+networks:
+ test_network:
+
+volumes:
+ db_data:
