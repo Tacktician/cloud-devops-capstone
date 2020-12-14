@@ -7,7 +7,7 @@ RUN groupadd flaskgroup && \
     mkdir -p /home/flask/app/gateway && \
     apt-get update && apt-get install curl -y
 
-COPY ../../../Desktop /home/flask/app/dbz-app
+COPY . /home/flask/app/dbz-app
 
 RUN pip install --no-cache-dir -r requirements.txt && \
     chown -R flask:flaskgroup /home/flask

@@ -15,7 +15,7 @@ services:
  app:
    image: dbz-app:latest
    build:
-    context: ../../../Desktop
+    context: .
    container_name: dbz-app
    ports:
     - "5000:5000"
