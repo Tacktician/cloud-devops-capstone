@@ -1,10 +1,5 @@
 pipeline {
     agent any
-    environment {
-        DOCKER_USER = credentials('docker-username')
-        DOCKER_PASSWORD = credentials('docker-password')
-        CI = true
-    }
     stages {
         stage('Install Dependencies') {
             steps {
@@ -31,6 +26,10 @@ pipeline {
         }
 
         stage('Tag and Push') {
+            environment {
+                DOCKER_USER = credentials('docker-username')
+                DOCKER_PASSWORD = credentials('docker-password')
+            }
             steps {
                 sh '''
                     docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
