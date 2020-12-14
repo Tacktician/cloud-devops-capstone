@@ -38,5 +38,14 @@ pipeline {
                 '''
             }
         }
+        
+        stage('Stop and Remove Containers') {
+            steps {
+                sh'''
+                    docker stop $(docker ps -aq)
+                    docker rm $(docker ps -aq)
+                '''
+            }
+        }
     }
 }
