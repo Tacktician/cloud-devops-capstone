@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 27017
+          name: default-port
+        volumeMounts:
+        - name: dbzdata-vol
+          mountPath: /data/db
+        env:
+        - name: MONGO_DATABASE
+          value: dbzdata
+      volumes:
+      - name: dbzdata-vol
+        emptyDir: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  labels:
+    app: mongodb
+spec:
+  type: NodePort
+  ports:
+  - port: 27017
+    targetPort: 27017
+    name: tcp
+  selector:
+    app: mongodb
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dbz-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dbz-app
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: dbz-app
+    spec:
+      containers:
+      - name: dbz-app
+        image: jtack4970/dbz-app:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+          name: default-port
+        env:
+        - name: MONGO_URI
+          value: mongodb
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: dbz-app
+  labels:
+    app: dbz-app
+spec:
+  type: NodePort
+  ports:
+  - port: 5000
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+    app: dbz-app
+
