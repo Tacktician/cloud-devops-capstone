@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Install Dependencies') {
             steps {
-                sh 'pip3 install --no-cache-dir --user -r requirements.txt'
+                sh 'pip3 install -r requirements.txt'
             }
         }
 
