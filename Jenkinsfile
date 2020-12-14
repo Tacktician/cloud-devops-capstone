@@ -1,5 +1,10 @@
 pipeline {
     agent any
+    environment {
+        DOCKER_USER = credentials('docker-username')
+        DOCKER_PASSWORD = credentials('docker-password)
+        CI = true
+    }
     stages {
         stage('Install Dependencies') {
             steps {
@@ -28,6 +33,7 @@ pipeline {
         stage('Tag and Push') {
             steps {
                 sh '''
+                    docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
                     docker tag dbz-app:latest jtack4970/dbz-app:latest
                     docker push jtack4970/dbz-app:latest
                 '''
