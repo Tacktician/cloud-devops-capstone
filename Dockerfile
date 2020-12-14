@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.7.3-stretch
 
 WORKDIR /home/flask/app/dbz-app
 
