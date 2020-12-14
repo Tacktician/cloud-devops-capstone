@@ -55,5 +55,5 @@ application = app
 
 
 if __name__ == '__main__':
-    logging.info('starting with MONGO_URL ' + os.getenv('MONGO_URI', 'localhost'))
+    logging.info('starting with MONGO_URL %d', os.getenv('MONGO_URI', 'localhost'))
     app.run(host='0.0.0.0', debug=True)
