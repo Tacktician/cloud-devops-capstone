@@ -8,21 +8,25 @@ This project is the final project of the Cloud DevOps Engineer Udacity Nanodegre
 * Building and deploying microservices in a Kubernetes cluster
 
 #### Table of Contents
-1. [Setup a Local Deployment](#setup-a-local-deployment)
+1. [The Sample App](#the-sample-app)
+2. [Setup a Local Deployment](#setup-a-local-deployment)
     1. [Python virtual Environment](#python-virtual-environment)
     2. [Local Docker Deployment](#local-docker-deployment)
-    3. Local Kubernetes Deployment #TODO
-2. Setup an AWS deployment #TODO 
-    1. Provision Network Resources #TODO
-    2. Setup Rolling Kubernetes Deployment #TODO
-    3. Ansible Deployment #TODO
+    3. [Local Kubernetes Deployment](#local-kubernetes-deployment)
+3. [Setup an AWS EKS deployment]()
+    1. [Use CloudFormation to Provision Network and EKS Resources](#use-cloudformation-to-provision-network-and-eks-resources)
+    2. Jenkins Pipeline
     
+## The Sample App
+The app I decided to use (I call it the __dragon ball z database__) is a microservice reference architecture using `flask` (frontend) and `mongodb` (backend). 
+
+The `flask` app is a simple router with a single endpoint (`/dbz`) that accepts `GET`, `PUT`, and `POST` methods and then routes to a `mongodb` instance.
 ## Setup a Local Deployment
 
 __Requirements__
 * Install Python 3.7
 * Install Docker
-* Install Kubernetes (either via Docker Desktop or minikube)
+* Install `minikube` (comes bundled with Docker Desktop)
 
 ### Python Virtual Environment
 1. Clone the repository:
@@ -69,3 +73,95 @@ __Requirements__
     a1c987fe96b4   mongo:latest     "docker-entrypoint.s…"   6 hours ago   Up 6 hours   0.0.0.0:27017->27017/tcp   mongodb
     ```
 4. Test the app stack (see step 6 in [local python deployment](#python-virtual-environment))
+5. Tag and push the `dbz-app` to DockerHub
+    
+    ```bash
+    docker tag dbz-app:latest <dockerhub-username>/<app-name>:<tag>
+    docker push <dockerhub-username/<repo-name>:<tag>
+    ```
+
+### Local Kubernetes Deployment
+
+1. Download and install `minikube`. Then start the cluster:
+    
+    ```bash
+    minikube start
+    ```
+   
+2. Send the `deployment`:
+    
+    ```bash
+    kubectl apply -f kube/deployment.yaml
+    ```
+   
+3. Send the `loadbalancer`:
+    
+    ```bash
+    kubectl apply -f kube/loadbalancer.yaml
+    ```
+4. With `minikube`, you must launch a `tunnel` to use the `LoadBalancer` service:
+    
+    ```bash
+    sudo minikube tunnel
+    ```
+   
+5. Get the services to gather the `EXTERNAL-IP`
+    
+    ```bash
+    kubectl get service
+   
+    NAME           TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)           AGE
+    dbz-app        NodePort       10.108.4.164     <none>        5000:31828/TCP    5m3s
+    kubernetes     ClusterIP      10.96.0.1        <none>        443/TCP           5m22s
+    loadbalancer   LoadBalancer   10.107.181.204   127.0.0.1     80:30582/TCP      4m59s
+    mongodb        NodePort       10.104.18.254    <none>        27017:30444/TCP   5m4s
+    ```
+   
+6. Test the application against `http://127.0.0.1/`. See step 6 in [local python deployment](#python-virtual-environment)) for the specific test commands.
+
+## Setup an AWS EKS deployment
+
+__Requirements__
+* AWS CLI with permissions to create the following resources:
+    * VPC
+    * Subnets
+    * Internet Gateway
+    * Router
+    * EKS Cluster
+    * EKS Cluster Nodes
+* VM with:
+    * Jenkins Configured with BlueOcean Plugin
+    * Kubernetes Pipeline Plugin
+    * Docker + Docker Compose Installed
+    * Python 3.7 Installed along with `pylint` and `pytest`
+    
+### Use CloudFormation to Provision Network and EKS Resources
+
+1. Navigate to the `cloudformation` directory:
+    
+    ```bash
+    cd cloudformation
+    ```
+
+2. Ensure the AWS CLI in installed and configured, then run the following command:
+    
+    ```bash
+    aws cloudformation create-stack --stack-name capstone-project \
+    --template-body file://network.yaml \
+    --parameters file://network-parameters.json \
+    --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" \
+    --region=us-west-2
+    ```
+
+3. Verify that network resources deployed successfully:
+4. Run the following command to deploy the EKS Cluster:
+    
+    ```bash
+    aws cloudformatioin update-stack --stack-name capstone-project \
+    --template-body file://cluster.yaml \
+    --parameters file://cluster-parameters.json \
+    --capabilities "CAPABILTY_IAM" "CAPABILITY_NAMED_IAM" \
+    --regioin=us-west-2
+    ```
+5. Verify that EKS cluster resources deployed successfully:
+
