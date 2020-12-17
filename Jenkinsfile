@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Install Dependencies') {
             steps {
-                sh 'pip3 install -r requirements.txt'
+                sh 'pip3 install --user -r requirements.txt'
             }
         }
 
@@ -49,29 +49,29 @@ pipeline {
         }
 
         stage('Deploy to EKS') {
-//             when {
-//                 branch "master"
-//             }
+            when {
+                branch "master"
+            }
 
             steps {
                 sh'''
                     cd .kube
-                    kubectl apply -f deployment.yaml
-                    kubectl apply -f loadbalancer.yaml
+                    kubectl --kubeconfig ~/.kube/config apply -f deployment.yaml
+                    kubectl --kubeconfig ~/.kube/config apply -f loadbalancer.yaml
                 '''
             }
         }
 
         stage( 'Rolling Restart') {
 
-//             when {
-//                 branch "master"
-//             }
+            when {
+                branch "master"
+            }
 
             steps {
                 sh'''
                     cd .kube
-                    kubectl rollout restart deployment dbz-app
+                    kubectl --kubeconfig ~/.kube/config apply rollout restart deployment dbz-app
                 '''
             }
         }
