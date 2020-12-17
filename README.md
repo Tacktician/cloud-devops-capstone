@@ -154,14 +154,34 @@ __Requirements__
     ```
 
 3. Verify that network resources deployed successfully:
+   ![Capstone-Project Network Resources Complete](docs/img/network.png)
+    ```bash
+    aws cloudformation list-stacks
+   
+    "StackId": "arn:aws:cloudformation:us-west-2:874642742331:stack/capstone-project/d1236720-3fde-11eb-9618-0602e4ee10e5",
+    "StackName": "capstone-project",
+    "TemplateDescription": "James Tacker / Udacity Cloud DevOps Engineer Nanodegree This template deploys aws network resources for the capstone project.",
+    "CreationTime": "2020-12-16T20:39:39.079000+00:00",
+    "StackStatus": "CREATE_COMPLETE",
+
+    ```
 4. Run the following command to deploy the EKS Cluster:
     
     ```bash
-    aws cloudformatioin update-stack --stack-name capstone-project \
+    aws cloudformation create-stack --stack-name capstone-eks \
     --template-body file://cluster.yaml \
     --parameters file://cluster-parameters.json \
-    --capabilities "CAPABILTY_IAM" "CAPABILITY_NAMED_IAM" \
-    --regioin=us-west-2
+    --capabilities "CAPABILITY_IAM" "CAPABILITY_NAMED_IAM" \
+    --region=us-west-2
     ```
 5. Verify that EKS cluster resources deployed successfully:
 
+    ![Capstone-Project Cluster Resources Complete](docs/img/capstone-eks.png)
+    ```bash
+    aws cloudformation list-stacks
+     "StackId": "arn:aws:cloudformation:us-west-2:874642742331:stack/capstone-eks/20465860-4004-11eb-a8b8-0ab8c9371e4d",
+     "StackName": "capstone-eks",
+     "TemplateDescription": "James Tacker / Udacity Cloud DevOps Engineer Nanodegree This template deploys aws EKS resources for the capstone project.",
+     "CreationTime": "2020-12-17T01:06:43.118000+00:00",
+     "StackStatus": "CREATE_COMPLETE",
+    ```

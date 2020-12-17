@@ -7,10 +7,10 @@ Parameters:
   EnvironmentName:
     Description: An environment prefix for all resource names
     Type: String
-    Default: capstone-project
+    Default: capstone-eks
 
 Resources:
-# Role policy to associate with Instance Profile
+
   EKSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -21,7 +21,7 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName}-EKSSecurityGroup
       VpcId:
-        Fn::ImportValue: capstone-project-VPC
+        Fn::ImportValue: capstone-project-VPCID
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 5000
@@ -37,78 +37,26 @@ Resources:
           ToPort: 5000
           CidrIp: 0.0.0.0/0
 
-  EKSClusterRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - eks.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-
-  # Role policy to associate with Instance Profile
-  EKSClusterRolePolicies:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: EKSAdminAccess
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action: 'eks:*'
-            Resource: '*'
-      Roles:
-        - !Ref EKSClusterRole
-
-  # Instance Profile to attach
-  EKSClusterRoleInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Path: "/"
-      Roles:
-        - !Ref EKSClusterRole
-
-  EKSNodeGroupRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - eks.amazonaws.com
-                - ec2.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: /
-      ManagedPolicyArns:
-        - !Ref arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
-        - !Ref arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-
   EKSCluster:
     Type: 'AWS::EKS::Cluster'
     Properties:
       Name: EKSCluster
       Version: '1.15'
-      RoleArn: !Ref EKSClusterRole
+      RoleArn: >-
+        arn:aws:iam::874642742331:role/capstone-project-eksClusterRole-1MNR61PM42T5J
       ResourcesVpcConfig:
         SecurityGroupIds:
           - !Ref EKSSecurityGroup
         SubnetIds:
           - Fn::ImportValue: capstone-project-public-subnet1
-          - Fn::ImportValue: capstone-project-publiic-subnet2
+          - Fn::ImportValue: capstone-project-public-subnet2
 
   EKSNodeGroup:
-    Type: 'AWS::EKS::Nodegroup'
+    Type: AWS::EKS::Nodegroup
     Properties:
       ClusterName: !Ref EKSCluster
-      NodeRole: !Ref EKSNodeGroupRole
+      NodeRole: >-
+        arn:aws:iam::874642742331:role/capstone-project-NodeInstanceRole-DKB29OVRZZ1K
       ScalingConfig:
         MinSize: 1
         DesiredSize: 1
@@ -118,14 +66,9 @@ Resources:
         - Fn::ImportValue: capstone-project-public-subnet2
 
 Outputs:
-  ClusterRoleArn:
-    Description: The role that Amazon EKS will use to create AWS resources for Kubernetes clusters
-    Value: !GetAtt EKSClusterRole.Arn
-    Export:
-      Name: !Sub "${AWS::StackName}-ClusterRoleArn"
 
-  NodeGroupArn:
-    Description: The role that Amazon EKS will use to create AWS resources for Kubernetes clusters
-    Value: !GetAtt EKSNodeGroupRole.Arn
+  ClusterArn:
+    Description: The EKS Cluster ID
+    Value: !GetAtt EKSCluster.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-NodeGroupArn"
+      Name: !Sub "${AWS::StackName}-ClusterArn"
