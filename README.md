@@ -15,10 +15,8 @@ This project is the final project of the Cloud DevOps Engineer Udacity Nanodegre
     3. [Local Kubernetes Deployment](#local-kubernetes-deployment)
 3. [Setup an AWS EKS deployment](#setup-an-aws-eks-deployment)
     1. [Use CloudFormation to Provision Network and EKS Resources](#use-cloudformation-to-provision-network-and-eks-resources)
-    2. [Generate `kubeconfig`]()
-    3. [Configure Jenkins Pipeline]()
-    4. [Connect Jenkins Pipeline with EKS]()
-    5. [Add Rolling Deployment]()
+    2. [Generate `kubeconfig`](#generate-kubeconfig)
+    3. [Configure Jenkins Pipeline](#configure-jenkins-pipeline)
     
 ## The Sample App
 The app I decided to use (I call it the __dragon ball z database__) is a microservice reference architecture using `flask` (frontend) and `mongodb` (backend). 
@@ -134,9 +132,11 @@ __Requirements__
     * EKS Cluster Nodes
 * VM with:
     * Jenkins Configured with BlueOcean Plugin
-    * Kubernetes Pipeline Plugin
+    * AWS CLI installed
+    * `kubectl` installed
     * Docker + Docker Compose Installed
     * Python 3.7 Installed along with `pylint` and `pytest`
+* A Git Repo (GitHub, GitLab, etc.)
     
 ### Use CloudFormation to Provision Network and EKS Resources
 
@@ -256,3 +256,98 @@ In order to communicate with the remote EKS cluster, we must generate a new `kub
 
     kubectl --kubeconfig=.kube/config-aws delete pods,services -l app=loadbalancer
     ```
+   
+### Configure Jenkins Pipeline
+
+1. SSH into your Jenkins VM
+2. Generate a new `kubeconfig`:
+
+    ```bash
+    aws eks --region us-west-2 update-kubeconfig --name EKSCluster
+    ```
+
+3. Test the connection:
+    
+    ```bash
+    kubectl get svc
+
+    NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+    kubernetes   ClusterIP   172.20.0.1   <none>        443/TCP   158m
+    ```
+
+4. In your project, add the following Jenkinsfile:
+
+   ```bash
+   pipeline {
+    agent any
+    stages {
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip3 install -r requirements.txt'
+            }
+        }
+
+        stage('Lint Python Code') {
+            steps {
+                sh 'pylint --disable=R,C,W1203,W1309,E0401 app.py'
+            }
+        }
+
+        stage('Local Build') {
+            steps {
+                sh 'docker-compose -f docker-compose.yaml up -d'
+            }
+        }
+
+        stage('API Tests') {
+            steps {
+                sh 'pytest tests/test_dbz.py'
+            }
+        }
+
+        stage('Tag and Push') {
+            environment {
+                DOCKER_USER = credentials('docker-username')
+                DOCKER_PASSWORD = credentials('docker-password')
+            }
+            steps {
+                sh '''
+                    docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+                    docker tag dbz-app:latest jtack4970/dbz-app:latest
+                    docker push jtack4970/dbz-app:latest
+                '''
+            }
+        }
+        
+        stage('Stop and Remove Containers') {
+            steps {
+                sh'''
+                    docker stop $(docker ps -aq)
+                    docker rm $(docker ps -aq)
+                '''
+            }
+        }
+
+        stage('Deploy to EKS') {
+            when {
+                branch 'master'
+            }
+            steps {
+                sh'''
+                cd .kube
+                kubectl apply -f deployment.yaml
+                kubectl apply -f loadbalancer.yaml
+                '''
+            }
+        }
+    }
+   }
+   ```
+   
+5. Commit your changes to a new branch in GitHub/GitLab. All checks should pass except the last one:
+
+    ![All Checks except last one]()
+
+6. Merge your changes to the master branch to setup the rolling deployment:
+
+    ![All Checks Pass]()
