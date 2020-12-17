@@ -42,8 +42,8 @@ Resources:
     Properties:
       Name: EKSCluster
       Version: '1.15'
-      RoleArn: >-
-        arn:aws:iam::874642742331:role/capstone-project-eksClusterRole-1MNR61PM42T5J
+      RoleArn:
+        Fn::ImportValue: capstone-project-ClusterRoleArn
       ResourcesVpcConfig:
         SecurityGroupIds:
           - !Ref EKSSecurityGroup
@@ -55,8 +55,8 @@ Resources:
     Type: AWS::EKS::Nodegroup
     Properties:
       ClusterName: !Ref EKSCluster
-      NodeRole: >-
-        arn:aws:iam::874642742331:role/capstone-project-NodeInstanceRole-DKB29OVRZZ1K
+      NodeRole:
+        Fn::ImportValue: capstone-project-NodeGroupArn
       ScalingConfig:
         MinSize: 1
         DesiredSize: 1
