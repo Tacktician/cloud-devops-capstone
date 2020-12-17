@@ -13,9 +13,11 @@ This project is the final project of the Cloud DevOps Engineer Udacity Nanodegre
     1. [Python virtual Environment](#python-virtual-environment)
     2. [Local Docker Deployment](#local-docker-deployment)
     3. [Local Kubernetes Deployment](#local-kubernetes-deployment)
-3. [Setup an AWS EKS deployment]()
+3. [Setup an AWS EKS deployment](#setup-an-aws-eks-deployment)
     1. [Use CloudFormation to Provision Network and EKS Resources](#use-cloudformation-to-provision-network-and-eks-resources)
-    2. Jenkins Pipeline
+    2. [Configure Jenkins Pipeline]()
+    3. [Connect Jenkins Pipeline with EKS]()
+    4. [Add Rolling Deployment]()
     
 ## The Sample App
 The app I decided to use (I call it the __dragon ball z database__) is a microservice reference architecture using `flask` (frontend) and `mongodb` (backend). 
