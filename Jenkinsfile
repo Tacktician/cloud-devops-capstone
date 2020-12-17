@@ -1,9 +1,5 @@
 pipeline {
     agent any
-    environment {
-        // The MY_KUBECONFIG environment variable will be assigned
-        MY_KUBECONFIG = credentials('my-kubeconfig')
-    }
     stages {
         stage('Install Dependencies') {
             steps {
@@ -56,7 +52,10 @@ pipeline {
             when {
                 branch "master"
             }
-
+            environment {
+                // The MY_KUBECONFIG environment variable will be assigned
+                MY_KUBECONFIG = credentials('my-kubeconfig')
+            }
             steps {
                 sh'''
                     cd .kube
@@ -71,7 +70,10 @@ pipeline {
             when {
                 branch "master"
             }
-
+            environment {
+                // The MY_KUBECONFIG environment variable will be assigned
+                MY_KUBECONFIG = credentials('my-kubeconfig')
+            }
             steps {
                 sh'''
                     cd .kube
