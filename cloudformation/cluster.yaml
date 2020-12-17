@@ -64,11 +64,21 @@ Resources:
       Subnets:
         - Fn::ImportValue: capstone-project-public-subnet1
         - Fn::ImportValue: capstone-project-public-subnet2
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-Node
 
 Outputs:
 
   ClusterArn:
-    Description: The EKS Cluster ID
+    Description: The EKS Cluster Arn
     Value: !GetAtt EKSCluster.Arn
     Export:
       Name: !Sub "${AWS::StackName}-ClusterArn"
+  NodeGroupArn:
+    Description: The EKS Node ID
+    Value: !GetAtt EKSNodeGroup.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-NodeArn"
