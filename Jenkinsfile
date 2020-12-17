@@ -49,8 +49,8 @@ pipeline {
         }
 
         stage('Deploy to EKS') {
-            when{
-                branch 'master'
+            when {
+                branch "master"
             }
 
             steps {
