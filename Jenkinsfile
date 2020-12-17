@@ -49,9 +49,9 @@ pipeline {
         }
 
         stage('Deploy to EKS') {
-            when {
-                branch "master"
-            }
+//             when {
+//                 branch "master"
+//             }
 
             steps {
                 sh'''
@@ -64,9 +64,9 @@ pipeline {
 
         stage( 'Rolling Restart') {
 
-            when {
-                branch "master"
-            }
+//             when {
+//                 branch "master"
+//             }
 
             steps {
                 sh'''
