@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  James Tacker / Udacity Cloud DevOps Engineer Nanodegree
+  This template deploys aws EKS resources for the capstone project.
+
+Parameters:
+  EnvironmentName:
+    Description: An environment prefix for all resource names
+    Type: String
+    Default: capstone-eks
+
+Resources:
+
+  EKSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EKS Cluster Security Group
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-EKSSecurityGroup
+      VpcId:
+        Fn::ImportValue: capstone-project-VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: 0.0.0.0/0
+
+  EKSCluster:
+    Type: 'AWS::EKS::Cluster'
+    Properties:
+      Name: EKSCluster
+      Version: '1.15'
+      RoleArn:
+        Fn::ImportValue: capstone-project-ClusterRoleArn
+      ResourcesVpcConfig:
+        SecurityGroupIds:
+          - !Ref EKSSecurityGroup
+        SubnetIds:
+          - Fn::ImportValue: capstone-project-public-subnet1
+          - Fn::ImportValue: capstone-project-public-subnet2
+
+  EKSNodeGroup:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: !Ref EKSCluster
+      NodeRole:
+        Fn::ImportValue: capstone-project-NodeGroupArn
+      ScalingConfig:
+        MinSize: 1
+        DesiredSize: 1
+        MaxSize: 3
+      Subnets:
+        - Fn::ImportValue: capstone-project-public-subnet1
+        - Fn::ImportValue: capstone-project-public-subnet2
+
+Outputs:
+
+  ClusterArn:
+    Description: The EKS Cluster ID
+    Value: !GetAtt EKSCluster.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ClusterArn"
