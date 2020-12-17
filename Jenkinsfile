@@ -47,5 +47,33 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deploy to EKS') {
+            when {
+                branch "master"
+            }
+
+            steps {
+                sh'''
+                    cd .kube
+                    kubectl apply -f deployment.yaml
+                    kubectl apply -f loadbalancer.yaml
+                '''
+            }
+        }
+
+        stage( 'Rolling Restart') {
+
+            when {
+                branch "master"
+            }
+
+            steps {
+                sh'''
+                    cd .kube
+                    kubectl rollout restart deployment dbz-app
+                '''
+            }
+        }
     }
 }
