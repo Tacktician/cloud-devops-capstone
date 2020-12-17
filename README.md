@@ -15,9 +15,8 @@ This project is the final project of the Cloud DevOps Engineer Udacity Nanodegre
     3. [Local Kubernetes Deployment](#local-kubernetes-deployment)
 3. [Setup an AWS EKS deployment](#setup-an-aws-eks-deployment)
     1. [Use CloudFormation to Provision Network and EKS Resources](#use-cloudformation-to-provision-network-and-eks-resources)
-    2. [Configure Jenkins Pipeline]()
-    3. [Connect Jenkins Pipeline with EKS]()
-    4. [Add Rolling Deployment]()
+    2. [Generate `kubeconfig`](#generate-kubeconfig)
+    3. [Configure Jenkins Pipeline](#configure-jenkins-pipeline)
     
 ## The Sample App
 The app I decided to use (I call it the __dragon ball z database__) is a microservice reference architecture using `flask` (frontend) and `mongodb` (backend). 
@@ -133,9 +132,11 @@ __Requirements__
     * EKS Cluster Nodes
 * VM with:
     * Jenkins Configured with BlueOcean Plugin
-    * Kubernetes Pipeline Plugin
+    * AWS CLI installed
+    * `kubectl` installed
     * Docker + Docker Compose Installed
     * Python 3.7 Installed along with `pylint` and `pytest`
+* A Git Repo (GitHub, GitLab, etc.)
     
 ### Use CloudFormation to Provision Network and EKS Resources
 
@@ -187,3 +188,166 @@ __Requirements__
      "CreationTime": "2020-12-17T01:06:43.118000+00:00",
      "StackStatus": "CREATE_COMPLETE",
     ```
+ 
+### Generate `kubeconfig`
+In order to communicate with the remote EKS cluster, we must generate a new `kubeconfig`. By default, `kubectl` uses the config in `$HOME/.kube/config`, which we  already used in a local deployment with `minikube`. So the options are to either update that config, or create a new one.
+
+1. Create a new directory and config for the new config file:
+    
+    ```bash
+    mkdir .kube && touch .kube/config-aws
+    ```
+   
+2. Use the  `awscli` to generate a new config file:
+
+    ```bash
+    aws eks --region us-west-2 update-kubeconfig --kubeconfig .kube/config-aws --name <cluster-name>
+    ```
+
+3. Test the config:
+    
+    ```bash
+    kubectl --kubeconfig=.kube/config-aws get svc
+    ```
+
+### Deploy App Stack to Kubernetes
+
+1. Deploy the App Stack to the EKS Cluster:
+    
+    ```bash
+    kubectl --kubeconfig=.kube/config-aws apply -f .kube/deployment.yaml
+    ```
+   
+2. Deploy the Load Balancer to the EKS Cluster:
+    
+    ```bash
+    kubectl --kubeconfig=.kube/config-aws apply -f .kube/loadbalancer.yaml
+    ```
+
+3. Gather services to extract the External IP:
+
+    ```bash
+    kubectl --kubeconfig=.kube/config-aws get services
+    
+    NAME           TYPE           CLUSTER-IP       EXTERNAL-IP                            PORT(S)           AGE
+    dbz-app        NodePort       172.20.217.6     <none>                                 5000:32239/TCP    3m24s
+    kubernetes     ClusterIP      172.20.0.1       <none>                                 443/TCP           107m
+    loadbalancer   LoadBalancer   172.20.194.205   <elb-id>.us-west-2.elb.amazonaws.com   80:31088/TCP      90s
+    mongodb        NodePort       172.20.123.220   <none>                                 27017:31669/TCP   3m24s
+   
+    ```
+    > You can also go to the AWS Console to retrieve the elb dns name
+
+4. Test the services:
+
+    ```bash
+    curl http://<elb-id>.us-west-2.elb.amazonaws.com/
+    
+    #Response
+   
+    "Please use /dbz URI to view content"
+    ```
+5. Teardown the services:
+
+    ```bash
+    kubectl --kubeconfig=.kube/config-aws delete pods,services -l app=dbz-app
+
+    kubectl --kubeconfig=.kube/config-aws delete pods,services -l app=mongodb
+
+    kubectl --kubeconfig=.kube/config-aws delete pods,services -l app=loadbalancer
+    ```
+   
+### Configure Jenkins Pipeline
+
+1. SSH into your Jenkins VM
+2. Generate a new `kubeconfig`:
+
+    ```bash
+    aws eks --region us-west-2 update-kubeconfig --name EKSCluster
+    ```
+
+3. Test the connection:
+    
+    ```bash
+    kubectl get svc
+
+    NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+    kubernetes   ClusterIP   172.20.0.1   <none>        443/TCP   158m
+    ```
+
+4. In your project, add the following Jenkinsfile:
+
+   ```bash
+   pipeline {
+    agent any
+    stages {
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip3 install -r requirements.txt'
+            }
+        }
+
+        stage('Lint Python Code') {
+            steps {
+                sh 'pylint --disable=R,C,W1203,W1309,E0401 app.py'
+            }
+        }
+
+        stage('Local Build') {
+            steps {
+                sh 'docker-compose -f docker-compose.yaml up -d'
+            }
+        }
+
+        stage('API Tests') {
+            steps {
+                sh 'pytest tests/test_dbz.py'
+            }
+        }
+
+        stage('Tag and Push') {
+            environment {
+                DOCKER_USER = credentials('docker-username')
+                DOCKER_PASSWORD = credentials('docker-password')
+            }
+            steps {
+                sh '''
+                    docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+                    docker tag dbz-app:latest jtack4970/dbz-app:latest
+                    docker push jtack4970/dbz-app:latest
+                '''
+            }
+        }
+        
+        stage('Stop and Remove Containers') {
+            steps {
+                sh'''
+                    docker stop $(docker ps -aq)
+                    docker rm $(docker ps -aq)
+                '''
+            }
+        }
+
+        stage('Deploy to EKS') {
+            when {
+                branch 'master'
+            }
+            steps {
+                sh'''
+                cd .kube
+                kubectl apply -f deployment.yaml
+                kubectl apply -f loadbalancer.yaml
+                '''
+            }
+        }
+    }
+   }
+   ```
+   
+5. Commit your changes to a new branch in GitHub/GitLab. All checks should pass except the last one:
+
+    ![All Checks except last one]()
+
+6. Merge your changes to the master branch to setup the rolling deployment:
+
+    ![All Checks Pass]()
