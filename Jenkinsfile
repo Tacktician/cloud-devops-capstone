@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    environment {
+        // The MY_KUBECONFIG environment variable will be assigned
+        MY_KUBECONFIG = credentials('my-kubeconfig')
+    }
     stages {
         stage('Install Dependencies') {
             steps {
@@ -56,8 +60,8 @@ pipeline {
             steps {
                 sh'''
                     cd .kube
-                    kubectl --kubeconfig ~/.kube/config apply -f deployment.yaml
-                    kubectl --kubeconfig ~/.kube/config apply -f loadbalancer.yaml
+                    kubectl --kubeconfig $MY_KUBECONFIG apply -f deployment.yaml
+                    kubectl --kubeconfig $MY_KUBECONFIG apply -f loadbalancer.yaml
                 '''
             }
         }
@@ -71,7 +75,7 @@ pipeline {
             steps {
                 sh'''
                     cd .kube
-                    kubectl --kubeconfig ~/.kube/config apply rollout restart deployment dbz-app
+                    kubectl --kubeconfig $MY_KUBECONFIG apply rollout restart deployment dbz-app
                 '''
             }
         }

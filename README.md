@@ -344,9 +344,9 @@ In order to communicate with the remote EKS cluster, we must generate a new `kub
    }
    ```
    
-5. Commit your changes to a new branch in GitHub/GitLab. All checks should pass except the last one:
+5. Commit your changes to a new branch in GitHub/GitLab. All checks should pass except the last two:
 
-    ![All Checks except last one]()
+    ![All Checks except last one](docs/img/pre-merge.png)
 
 6. Merge your changes to the master branch to setup the rolling deployment:
 
