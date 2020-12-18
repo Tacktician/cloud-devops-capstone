@@ -277,11 +277,16 @@ In order to communicate with the remote EKS cluster, we must generate a new `kub
     kubernetes   ClusterIP   172.20.0.1   <none>        443/TCP   158m
     ```
 
-4. In your project, add the following [Jenkinsfile](Jenkinsfile)
-5. Commit your changes to a new branch in GitHub/GitLab. All checks should pass except the last two:
+4. In your project, add the following [Jenkinsfile](Jenkinsfile). The pipeline will run the same steps as the local deployment but in the pipeline. 
 
+    For example, if the Python Linter step fails it will appear as this:
+    
+    ![Pylint Fail](docs/img/pylinter-fail.png)
+    
+    After a fix is committed, all checks (including the linter) pass except for the last two—which only execute after a successful merge onto the `master` branch:
+    
     ![All Checks except last one](docs/img/pre-merge.png)
 
-6. Merge your changes to the master branch to deploy the resources to EKS and kickoff a rolling restart of the pods:
+6. Merge your pull request to the `master` branch to deploy the resources to EKS and kickoff a `rolling restart` of the Kubernetes pods:
 
     ![All Checks Pass](docs/img/rolling-restart.png)
