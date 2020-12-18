@@ -10,6 +10,6 @@ downloads/
 instance/
 .webassets-cache
 .venv
-.kube/config-aws
+kube/config-aws
 *.idea/
 *.DS_Store

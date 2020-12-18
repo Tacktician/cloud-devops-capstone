@@ -59,14 +59,25 @@ pipeline {
             }
         }
 
+        stage('Test Cluster Connection') {
+            when {
+                branch "master"
+            }
+            steps {
+                sh'''
+                    kubectl get svc
+                '''
+            }
+        }
+
         stage('Deploy to EKS') {
             when {
                 branch "master"
             }
             steps {
                 sh'''
-                    kubectl --kubeconfig ~/.kube/config apply -f deployment.yaml
-                    kubectl --kubeconfig ~/.kube/config apply -f loadbalancer.yaml
+                    kubectl --kubeconfig ~/.kube/config apply -f kube/deployment.yaml
+                    kubectl --kubeconfig ~/.kube/config apply -f kube/loadbalancer.yaml
                 '''
             }
         }
