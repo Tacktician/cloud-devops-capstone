@@ -65,8 +65,8 @@ pipeline {
             }
             steps {
                 sh'''
-                    kubectl --kubeconfig .kube/config apply -f deployment.yaml
-                    kubectl --kubeconfig .kube/config apply -f loadbalancer.yaml
+                    kubectl --kubeconfig ~/.kube/config apply -f deployment.yaml
+                    kubectl --kubeconfig ~/.kube/config apply -f loadbalancer.yaml
                 '''
             }
         }
@@ -76,7 +76,7 @@ pipeline {
                 branch "master"
             }
             steps {
-                sh 'kubectl --kubeconfig .kube/config apply rollout restart deployment dbz-app'
+                sh 'kubectl --kubeconfig ~/.kube/config apply rollout restart deployment dbz-app'
             }
         }
     }
