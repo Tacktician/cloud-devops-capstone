@@ -48,7 +48,7 @@ pipeline {
             }
         }
 
-        stage('Update Kubeconfig') {
+        stage('Deploy to EKSCluster') {
             when {
                 branch "master"
             }
@@ -56,21 +56,10 @@ pipeline {
                 withAWS(region: 'us-west-2', credentials: 'aws-credentials') {
                     sh '''
                         aws eks --region us-west-2 update-kubeconfig --name EKSCluster
-                        kubectl get svc
+                        kubectl --kubeconfig ~/.kube/config apply -f kube/deployment.yaml
+                        kubectl --kubeconfig ~/.kube/config apply -f kube/loadbalancer.yaml
                     '''
                 }
-            }
-        }
-
-        stage('Deploy to EKS') {
-            when {
-                branch "master"
-            }
-            steps {
-                sh'''
-                    kubectl --kubeconfig ~/.kube/config apply -f kube/deployment.yaml
-                    kubectl --kubeconfig ~/.kube/config apply -f kube/loadbalancer.yaml
-                '''
             }
         }
 
@@ -79,7 +68,9 @@ pipeline {
                 branch "master"
             }
             steps {
-                sh 'kubectl --kubeconfig ~/.kube/config apply rollout restart deployment dbz-app'
+                withAWS(region: 'us-west-2', credentials: 'aws-credentials') {
+                    sh 'kubectl --kubeconfig ~/.kube/config apply rollout restart deployment dbz-app'
+                }
             }
         }
     }
