@@ -54,19 +54,11 @@ pipeline {
             }
             steps {
                 withAWS(region: 'us-west-2', credentials: 'aws-credentials') {
-                    sh 'aws eks --region us-west-2 update-kubeconfig --name EKSCluster'
+                    sh '''
+                        aws eks --region us-west-2 update-kubeconfig --name EKSCluster
+                        kubectl get svc
+                    '''
                 }
-            }
-        }
-
-        stage('Test Cluster Connection') {
-            when {
-                branch "master"
-            }
-            steps {
-                sh'''
-                    kubectl get svc
-                '''
             }
         }
 
