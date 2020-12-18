@@ -58,7 +58,6 @@ pipeline {
             }
             steps {
                 sh'''
-                    cd .kube
                     kubectl --kubeconfig $MY_KUBECONFIG apply -f deployment.yaml
                     kubectl --kubeconfig $MY_KUBECONFIG apply -f loadbalancer.yaml
                 '''
@@ -76,7 +75,6 @@ pipeline {
             }
             steps {
                 sh'''
-                    cd .kube
                     kubectl --kubeconfig $MY_KUBECONFIG apply rollout restart deployment dbz-app
                 '''
             }
