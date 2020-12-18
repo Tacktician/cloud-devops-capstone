@@ -1,4 +1,5 @@
 # Cloud DevOps Engineer Capstone Project
+[![Build Status](http://ec2-44-234-120-21.us-west-2.compute.amazonaws.com:8080/buildStatus/icon?job=cloud-devops-capstone%2Fmaster)](http://ec2-44-234-120-21.us-west-2.compute.amazonaws.com:8080/job/cloud-devops-capstone/job/master/)
 
 This project is the final project of the Cloud DevOps Engineer Udacity Nanodegree. The project showcases all skills and knowledge acquired throughout the Cloud DevOps Nanodegree program which included:
 
@@ -210,9 +211,9 @@ In order to communicate with the remote EKS cluster, we must generate a new `kub
     kubectl --kubeconfig=.kube/config-aws get svc
     ```
 
-### Deploy App Stack to Kubernetes
+### Test App Stack Deployment to Kubernetes
 
-1. Deploy the App Stack to the EKS Cluster:
+1. Manually deploy the App Stack to the EKS Cluster:
     
     ```bash
     kubectl --kubeconfig=.kube/config-aws apply -f .kube/deployment.yaml
@@ -247,6 +248,7 @@ In order to communicate with the remote EKS cluster, we must generate a new `kub
    
     "Please use /dbz URI to view content"
     ```
+   
 5. Teardown the services:
 
     ```bash
@@ -275,79 +277,11 @@ In order to communicate with the remote EKS cluster, we must generate a new `kub
     kubernetes   ClusterIP   172.20.0.1   <none>        443/TCP   158m
     ```
 
-4. In your project, add the following Jenkinsfile:
-
-   ```bash
-   pipeline {
-    agent any
-    stages {
-        stage('Install Dependencies') {
-            steps {
-                sh 'pip3 install -r requirements.txt'
-            }
-        }
-
-        stage('Lint Python Code') {
-            steps {
-                sh 'pylint --disable=R,C,W1203,W1309,E0401 app.py'
-            }
-        }
-
-        stage('Local Build') {
-            steps {
-                sh 'docker-compose -f docker-compose.yaml up -d'
-            }
-        }
-
-        stage('API Tests') {
-            steps {
-                sh 'pytest tests/test_dbz.py'
-            }
-        }
-
-        stage('Tag and Push') {
-            environment {
-                DOCKER_USER = credentials('docker-username')
-                DOCKER_PASSWORD = credentials('docker-password')
-            }
-            steps {
-                sh '''
-                    docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-                    docker tag dbz-app:latest jtack4970/dbz-app:latest
-                    docker push jtack4970/dbz-app:latest
-                '''
-            }
-        }
-        
-        stage('Stop and Remove Containers') {
-            steps {
-                sh'''
-                    docker stop $(docker ps -aq)
-                    docker rm $(docker ps -aq)
-                '''
-            }
-        }
-
-        stage('Deploy to EKS') {
-            when {
-                branch 'master'
-            }
-            steps {
-                sh'''
-                cd .kube
-                kubectl apply -f deployment.yaml
-                kubectl apply -f loadbalancer.yaml
-                '''
-            }
-        }
-    }
-   }
-   ```
-   
+4. In your project, add the following [Jenkinsfile](Jenkinsfile)
 5. Commit your changes to a new branch in GitHub/GitLab. All checks should pass except the last two:
 
     ![All Checks except last one](docs/img/pre-merge.png)
 
-6. Merge your changes to the master branch to setup the rolling deployment:
+6. Merge your changes to the master branch to deploy the resources to EKS and kickoff a rolling restart of the pods:
 
-    ![All Checks Pass]()
+    ![All Checks Pass](docs/img/rolling-restart.png)
