@@ -57,10 +57,12 @@ pipeline {
                 MY_KUBECONFIG = credentials('my-kubeconfig')
             }
             steps {
-                sh'''
-                    kubectl --kubeconfig $MY_KUBECONFIG apply -f deployment.yaml
-                    kubectl --kubeconfig $MY_KUBECONFIG apply -f loadbalancer.yaml
-                '''
+                withAWS(region:'us-west-2', credentials: 'aws-credentials') {
+                    sh '''
+                        kubectl --kubeconfig $MY_KUBECONFIG apply -f deployment.yaml
+                        kubectl --kubeconfig $MY_KUBECONFIG apply -f loadbalancer.yaml
+                    '''
+                }
             }
         }
 
@@ -74,9 +76,11 @@ pipeline {
                 MY_KUBECONFIG = credentials('my-kubeconfig')
             }
             steps {
-                sh'''
-                    kubectl --kubeconfig $MY_KUBECONFIG apply rollout restart deployment dbz-app
-                '''
+                withAWS(region:'us-west-2', credentials: 'aws-credentials') {
+                    sh'''
+                        kubectl --kubeconfig $MY_KUBECONFIG apply rollout restart deployment dbz-app
+                    '''
+                }
             }
         }
     }
