@@ -48,39 +48,35 @@ pipeline {
             }
         }
 
-        stage('Deploy to EKS') {
+        stage('Update Kubeconfig') {
             when {
                 branch "master"
             }
-            environment {
-                // The MY_KUBECONFIG environment variable will be assigned
-                MY_KUBECONFIG = credentials('my-kubeconfig')
-            }
             steps {
-                withAWS(region:'us-west-2', credentials: 'aws-credentials') {
-                    sh '''
-                        kubectl --kubeconfig $MY_KUBECONFIG apply -f deployment.yaml
-                        kubectl --kubeconfig $MY_KUBECONFIG apply -f loadbalancer.yaml
-                    '''
+                withAWS(region: 'us-west-2', credentials: 'aws-credentials') {
+                    sh 'aws eks --region us-west-2 update-kubeconfig --name EKSCluster'
                 }
             }
         }
 
-        stage( 'Rolling Restart') {
-
+        stage('Deploy to EKS') {
             when {
                 branch "master"
             }
-            environment {
-                // The MY_KUBECONFIG environment variable will be assigned
-                MY_KUBECONFIG = credentials('my-kubeconfig')
+            steps {
+                sh'''
+                    kubectl $MY_KUBECONFIG apply -f deployment.yaml
+                    kubectl $MY_KUBECONFIG apply -f loadbalancer.yaml
+                '''
+            }
+        }
+
+        stage( 'Rolling Restart') {
+            when {
+                branch "master"
             }
             steps {
-                withAWS(region:'us-west-2', credentials: 'aws-credentials') {
-                    sh'''
-                        kubectl --kubeconfig $MY_KUBECONFIG apply rollout restart deployment dbz-app
-                    '''
-                }
+                sh 'kubectl apply rollout restart deployment dbz-app'
             }
         }
     }
