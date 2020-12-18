@@ -65,8 +65,8 @@ pipeline {
             }
             steps {
                 sh'''
-                    kubectl $MY_KUBECONFIG apply -f deployment.yaml
-                    kubectl $MY_KUBECONFIG apply -f loadbalancer.yaml
+                    kubectl apply -f deployment.yaml
+                    kubectl apply -f loadbalancer.yaml
                 '''
             }
         }
