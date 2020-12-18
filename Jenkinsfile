@@ -69,7 +69,7 @@ pipeline {
             }
             steps {
                 withAWS(region: 'us-west-2', credentials: 'aws-credentials') {
-                    sh 'kubectl --kubeconfig ~/.kube/config apply rollout restart deployment dbz-app'
+                    sh 'kubectl --kubeconfig ~/.kube/config rollout restart deployment dbz-app'
                 }
             }
         }
