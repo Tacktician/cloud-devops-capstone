@@ -31,7 +31,7 @@ def get_all_dbzs():
 @app.route('/dbz/<name>', methods=['GET'])
 def get_one_dbz(name):
     dbz = mongodb.db.dbzdata
-    s = dbz.find_one({'name': name})
+    st = dbz.find_one({'name': name})
     if request.method == 'GET':
         if s:
             output = {'name': s['name'], 'powerlevel': s['powerlevel']}
