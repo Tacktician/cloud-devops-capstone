@@ -1,5 +1,4 @@
 # Cloud DevOps Engineer Capstone Project
-[![Build Status](http://ec2-44-234-120-21.us-west-2.compute.amazonaws.com:8080/buildStatus/icon?job=cloud-devops-capstone%2Fmaster)](http://ec2-44-234-120-21.us-west-2.compute.amazonaws.com:8080/job/cloud-devops-capstone/job/master/)
 
 This project is the final project of the Cloud DevOps Engineer Udacity Nanodegree. The project showcases all skills and knowledge acquired throughout the Cloud DevOps Nanodegree program which included:
 
