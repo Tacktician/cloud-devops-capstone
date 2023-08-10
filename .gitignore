@@ -1,3 +1,6 @@
+.terraform/
+terraform.tfvars
+
 __pycache__/
 
 .Python
